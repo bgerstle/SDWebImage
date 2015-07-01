@@ -70,13 +70,24 @@ typedef void(^SDWebImageCalculateSizeBlock)(NSUInteger fileCount, NSUInteger tot
 + (SDImageCache *)sharedImageCache;
 
 /**
- * Init a new cache store with a specific namespace
+ * Init a new cache store with a specific namespace inside the application's caches directory.
  *
  * @param ns The namespace to use for this cache store
+ *
+ * @see -initWithNamespace:inDirectory:
  */
 - (id)initWithNamespace:(NSString *)ns;
 
--(NSString *)makeDiskCachePath:(NSString*)fullNamespace;
+/**
+ * Init a new cache store with a specific namespace within a given directory.
+ *
+ * @param ns        The namespace to use for this cache store
+ *
+ * @param directory The absolute path to the directory where the data will be written to disk
+ *
+ * @return A cache configured to store data to disk at the path `directory/ns`.
+ */
+- (id)initWithNamespace:(NSString *)ns inDirectory:(NSString*)directory;
 
 /**
  * Add a read-only cache path to search for images pre-cached by SDImageCache

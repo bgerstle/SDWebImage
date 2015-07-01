@@ -84,6 +84,12 @@ FOUNDATION_STATIC_INLINE NSUInteger SDCacheCostForImage(UIImage *image) {
 }
 
 - (id)initWithNamespace:(NSString *)ns {
+    NSString* defaultCacheDirectory = [[self class] defaultCacheDirectory];
+    NSAssert(defaultCacheDirectory.length, @"Default cache directory path must not be empty");
+    return [self initWithNamespace:ns inDirectory:defaultCacheDirectory];
+}
+
+- (id)initWithNamespace:(NSString *)ns inDirectory:(NSString*)directory {
     if ((self = [super init])) {
         NSString *fullNamespace = [@"com.hackemist.SDWebImageCache." stringByAppendingString:ns];
 
@@ -101,7 +107,7 @@ FOUNDATION_STATIC_INLINE NSUInteger SDCacheCostForImage(UIImage *image) {
         _memCache.name = fullNamespace;
 
         // Init the disk cache
-        _diskCachePath = [self makeDiskCachePath:fullNamespace];
+        _diskCachePath = [directory stringByAppendingPathComponent:fullNamespace];
 
         // Set decompression to YES
         _shouldDecompressImages = YES;
@@ -173,10 +179,8 @@ FOUNDATION_STATIC_INLINE NSUInteger SDCacheCostForImage(UIImage *image) {
 
 #pragma mark ImageCache
 
-// Init the disk cache
--(NSString *)makeDiskCachePath:(NSString*)fullNamespace{
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    return [paths[0] stringByAppendingPathComponent:fullNamespace];
++ (NSString *)defaultCacheDirectory {
+    return [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
 }
 
 - (void)storeImage:(UIImage *)image recalculateFromImage:(BOOL)recalculate imageData:(NSData *)imageData forKey:(NSString *)key toDisk:(BOOL)toDisk {
