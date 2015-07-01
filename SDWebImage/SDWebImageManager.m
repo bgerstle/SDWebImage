@@ -28,7 +28,7 @@
 
 @implementation SDWebImageManager
 
-+ (id)sharedManager {
++ (instancetype)sharedManager {
     static dispatch_once_t once;
     static id instance;
     dispatch_once(&once, ^{
@@ -37,18 +37,19 @@
     return instance;
 }
 
-- (id)init {
+- (instancetype)init {
+    return [self initWithDownloader:[SDWebImageDownloader sharedDownloader]
+                              cache:[SDImageCache sharedImageCache]];
+}
+
+- (instancetype)initWithDownloader:(SDWebImageDownloader *)downloader cache:(SDImageCache *)cache {
     if ((self = [super init])) {
-        _imageCache = [self createCache];
-        _imageDownloader = [SDWebImageDownloader sharedDownloader];
+        _imageCache = cache;
+        _imageDownloader = downloader;
         _failedURLs = [NSMutableSet new];
         _runningOperations = [NSMutableArray new];
     }
     return self;
-}
-
-- (SDImageCache *)createCache {
-    return [SDImageCache sharedImageCache];
 }
 
 - (NSString *)cacheKeyForURL:(NSURL *)url {
@@ -158,7 +159,7 @@
         if ((!image || options & SDWebImageRefreshCached) && (![self.delegate respondsToSelector:@selector(imageManager:shouldDownloadImageForURL:)] || [self.delegate imageManager:self shouldDownloadImageForURL:url])) {
             if (image && options & SDWebImageRefreshCached) {
                 dispatch_main_sync_safe(^{
-                    // If image was found in the cache bug SDWebImageRefreshCached is provided, notify about the cached image
+                    // If image was found in the cache but SDWebImageRefreshCached is provided, notify about the cached image
                     // AND try to re-download it in order to let a chance to NSURLCache to refresh it from server.
                     completedBlock(image, nil, cacheType, YES, url);
                 });
