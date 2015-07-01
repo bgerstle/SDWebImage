@@ -59,6 +59,21 @@ static NSString *const kCompletedCallbackKey = @"completed";
     return instance;
 }
 
+- (BOOL)isDownloadingImageAtURL:(NSURL*)URL {
+    // TODO: concurrent search?
+    return [self.downloadQueue.operations indexOfObjectPassingTest:^BOOL(SDWebImageDownloaderOperation* op,
+                                                                         NSUInteger idx,
+                                                                         BOOL *stop) {
+        BOOL match = [op.request.URL isEqual:URL];
+        if (match) {
+            *stop = YES;
+            return YES;
+        } else {
+            return NO;
+        }
+    }] != NSNotFound;
+}
+
 - (id)init {
     if ((self = [super init])) {
         _operationClass = [SDWebImageDownloaderOperation class];

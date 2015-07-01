@@ -135,6 +135,8 @@ typedef NSDictionary *(^SDWebImageDownloaderHeadersFilterBlock)(NSURL *url, NSDi
  */
 - (void)setValue:(NSString *)value forHTTPHeaderField:(NSString *)field;
 
+- (BOOL)isDownloadingImageAtURL:(NSURL*)URL;
+
 /**
  * Returns the value of the specified HTTP header field.
  *
