@@ -183,6 +183,25 @@ FOUNDATION_STATIC_INLINE NSUInteger SDCacheCostForImage(UIImage *image) {
     return [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
 }
 
+- (void)storeDataToDisk:(NSData*)data forKey:(NSString*)key {
+    if (!data) {
+        return;
+    }
+    dispatch_async(self.ioQueue, ^{
+        if (data) {
+            if (![_fileManager fileExistsAtPath:_diskCachePath]) {
+                [_fileManager createDirectoryAtPath:_diskCachePath
+                        withIntermediateDirectories:YES
+                                         attributes:nil
+                                              error:NULL];
+            }
+
+            [_fileManager createFileAtPath:[self defaultCachePathForKey:key] contents:data attributes:nil];
+        }
+    });
+}
+
+
 - (void)storeImage:(UIImage *)image recalculateFromImage:(BOOL)recalculate imageData:(NSData *)imageData forKey:(NSString *)key toDisk:(BOOL)toDisk {
     if (!image || !key) {
         return;
@@ -192,11 +211,11 @@ FOUNDATION_STATIC_INLINE NSUInteger SDCacheCostForImage(UIImage *image) {
     [self.memCache setObject:image forKey:key cost:cost];
 
     if (toDisk) {
-        dispatch_async(self.ioQueue, ^{
-            NSData *data = imageData;
-
-            if (image && (recalculate || !data)) {
+        if (image && (recalculate || !imageData)) {
+            dispatch_async(dispatch_get_global_queue(0, 0), ^{
 #if TARGET_OS_IPHONE
+                NSData *data = imageData;
+
                 // We need to determine if the image is a PNG or a JPEG
                 // PNGs are easier to detect because they have a unique signature (http://www.w3.org/TR/PNG-Structure.html)
                 // The first eight bytes of a PNG file always contain the following (decimal) values:
@@ -224,16 +243,10 @@ FOUNDATION_STATIC_INLINE NSUInteger SDCacheCostForImage(UIImage *image) {
 #else
                 data = [NSBitmapImageRep representationOfImageRepsInArray:image.representations usingType: NSJPEGFileType properties:nil];
 #endif
-            }
+                [self storeDataToDisk:imageData forKey:key];
+            });
+        }
 
-            if (data) {
-                if (![_fileManager fileExistsAtPath:_diskCachePath]) {
-                    [_fileManager createDirectoryAtPath:_diskCachePath withIntermediateDirectories:YES attributes:nil error:NULL];
-                }
-
-                [_fileManager createFileAtPath:[self defaultCachePathForKey:key] contents:data attributes:nil];
-            }
-        });
     }
 }
 
