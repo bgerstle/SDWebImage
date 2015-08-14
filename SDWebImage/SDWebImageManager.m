@@ -149,6 +149,14 @@
 
     operation.cacheOperation = [self.imageCache queryDiskCacheForKey:key done:^(UIImage *image, SDImageCacheType cacheType) {
         if (operation.isCancelled) {
+            if (options & SDWebImageReportCancellationAsError) {
+                NSError* error = [NSError errorWithDomain:NSURLErrorDomain
+                                                     code:NSURLErrorCancelled
+                                                 userInfo:@{
+                                      NSURLErrorFailingURLErrorKey: url
+                                  }];
+                completedBlock(nil, error, SDImageCacheTypeNone, NO, url);
+            }
             @synchronized (self.runningOperations) {
                 [self.runningOperations removeObject:operation];
             }
@@ -250,7 +258,12 @@
             }];
             operation.cancelBlock = ^{
                 [subOperation cancel];
-                
+                if (options & SDWebImageReportCancellationAsError) {
+                    NSError* error = [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorCancelled userInfo:@{
+                        NSURLErrorFailingURLErrorKey: url
+                    }];
+                    completedBlock(nil, error, SDImageCacheTypeNone, NO, url);
+                }
                 @synchronized (self.runningOperations) {
                     [self.runningOperations removeObject:weakOperation];
                 }
