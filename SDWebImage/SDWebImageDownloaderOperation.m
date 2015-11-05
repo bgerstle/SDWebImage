@@ -144,7 +144,8 @@ NSString *const SDWebImageDownloadFinishNotification = @"SDWebImageDownloadFinis
 - (void)cancel {
     @synchronized (self) {
         if (self.thread) {
-            [self performSelector:@selector(cancelInternalAndStop) onThread:self.thread withObject:nil waitUntilDone:NO];
+            NSParameterAssert(![[NSThread currentThread] isEqual:self.thread]);
+            [self performSelector:@selector(cancelInternalAndStop) onThread:self.thread withObject:nil waitUntilDone:YES];
         }
         else {
             [self cancelInternal];
